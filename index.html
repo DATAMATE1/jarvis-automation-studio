@@ -13,6 +13,7 @@
       margin: 0;
       padding: 20px;
       line-height: 1.6;
+      scroll-behavior: smooth;
     }
     .container { max-width: 800px; margin: 0 auto; }
     h1 { text-align: center; margin-bottom: 30px; color: #4a2c8c; }
@@ -41,10 +42,12 @@
     .live-link { display: block; color: #4a2c8c; text-decoration: none; margin-top: 12px; word-break: break-all; font-weight: bold; }
     label { display: block; margin-top: 16px; font-weight: 600; color: #333; }
     input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    form { display: contents; }
     textarea { min-height: 80px; resize: vertical; }
     .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .inline-message { margin-top: 15px; padding: 10px; border-radius: 8px; display: none; }
+    .inline-message { margin-top: 15px; padding: 10px; border-radius: 8px; display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+    .inline-message.show { display: block; opacity: 1; }
     .inline-success { background: #e8f5e9; color: #388e3c; }
     .inline-error { background: #ffebee; color: #d32f2f; }
   </style>
@@ -54,22 +57,24 @@
     <h1>🤖 Jarvis Automation Studio</h1>
     
     <div class="card">
-      <h2>New Automation Request</h2>
-      <label>Project Goal (One-Liner)</label>
-      <input id="title" placeholder="e.g., Automate new lead entry from website form into HubSpot & Slack">
-      
-      <label>Trigger (What starts it?)</label>
-      <input id="trigger" placeholder="e.g., New form submission on 'Contact Us' Typeform">
-      
-      <label>Actions (What should happen?)</label>
-      <textarea id="actions" placeholder="e.g., Take 'Email', 'Name'... In HubSpot: Find or Create Contact..."></textarea>
-      
-      <label>The 'Gotcha' (Any if-then rules?)</label>
-      <textarea id="notes" placeholder="e.g., IF Budget > $10k, THEN tag 'High-Priority'"></textarea>
-      
-      <button id="submitBtn" class="btn btn-primary">
-        ✅ Submit to Production
-      </button>
+      <form id="automationForm">
+        <h2>New Automation Request</h2>
+        <label for="title">Project Goal (One-Liner)</label>
+        <input id="title" placeholder="e.g., Automate new lead entry" required>
+        
+        <label for="trigger">Trigger (What starts it?)</label>
+        <input id="trigger" placeholder="e.g., New form submission" required>
+        
+        <label for="actions">Actions (What should happen?)</label>
+        <textarea id="actions" placeholder="e.g., Create contact in HubSpot" required></textarea>
+        
+        <label for="notes">The 'Gotcha' (Any if-then rules?)</label>
+        <textarea id="notes" placeholder="e.g., IF Budget > $10k, tag 'High-Priority'"></textarea>
+        
+        <button id="submitBtn" type="submit" class="btn btn-primary">
+          ✅ Submit to Production
+        </button>
+      </form>
     </div>
 
     <div class="card" id="projectCard" style="display:none;">
@@ -90,32 +95,28 @@
 
       <div id="inlineMessage" class="inline-message"></div>
 
-      <textarea class="revise-input" id="revisionFeedback" placeholder="Type your revision request (e.g., 'Use Telegram instead of WhatsApp')"></textarea>
+      <textarea class="revise-input" id="revisionFeedback" placeholder="Type your revision request..."></textarea>
 
       <div class="buttons">
-        <button class="btn btn-generate" onclick="generateBlueprint()">Generate Blueprint</button>
-        <button class="btn btn-test" onclick="testBlueprint()">Test</button>
-        <button class="btn btn-revise" onclick="reviseBlueprint()">Revise</button>
-        <button class="btn btn-deploy" onclick="deployBlueprint()">Deploy to Make.com</button>
+        <button type="button" class="btn btn-generate" data-action="generate_blueprint">Generate Blueprint</button>
+        <button type="button" class="btn btn-test" data-action="test_blueprint">Test</button>
+        <button type="button" class="btn btn-revise" data-action="revise">Revise</button>
+        <button type="button" class="btn btn-deploy" data-action="deploy">Deploy to Make.com</button>
       </div>
 
       <a href="#" class="live-link" id="liveLink" style="display:none;"></a>
     </div>
   </div>
 
-  <!-- Production-Ready Script with all fixes and improvements -->
   <script type="module">
-    // Import Mermaid.js for rendering diagrams
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.js';
 
-    // === 1. SUPABASE SETUP (FIXED ) ===
     const SUPABASE_URL = 'https://lbbsbiufwdjatjlhpvsg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg';
-    // FIX: The global object is 'Supabase', not 'supabase'.
-    const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    const supabaseClient = window.Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-    // === 2. DOM ELEMENT CACHING ===
     const elements = {
+        automationForm: document.getElementById('automationForm'),
         submitBtn: document.getElementById('submitBtn'),
         projectCard: document.getElementById('projectCard'),
         projectTitle: document.getElementById('projectTitle'),
@@ -131,50 +132,50 @@
         actionButtons: document.querySelectorAll('.buttons .btn')
     };
     let currentProjectId = null;
+    let messageTimeout;
 
-    // === 3. UI HELPER FUNCTIONS (IMPROVED) ===
-    function showMessage(message, type = 'info') {
+    function showMessage(message, type = 'info', duration = 5000) {
+        clearTimeout(messageTimeout);
         elements.inlineMessage.textContent = message;
-        elements.inlineMessage.className = `inline-message inline-${type}`;
-        elements.inlineMessage.style.display = 'block';
-    }
-
-    function hideMessage() {
-        elements.inlineMessage.style.display = 'none';
-    }
-
-    function setButtonsLoading(isLoading) {
-        elements.actionButtons.forEach(btn => {
-            btn.disabled = isLoading;
-            if (isLoading) {
-                btn.innerHTML = '<span class="loading-spinner"></span>';
-            }
-        });
-        // Restore original text after loading
-        if (!isLoading) {
-            document.querySelector('.btn-generate').textContent = 'Generate Blueprint';
-            document.querySelector('.btn-test').textContent = 'Test';
-            document.querySelector('.btn-revise').textContent = 'Revise';
-            document.querySelector('.btn-deploy').textContent = 'Deploy to Make.com';
+        elements.inlineMessage.className = `inline-message inline-${type} show`;
+        if (duration) {
+            messageTimeout = setTimeout(() => hideMessage(), duration);
         }
     }
 
-    // === 4. CORE LOGIC ===
-    async function submitRequest() {
+    function hideMessage() {
+        elements.inlineMessage.classList.remove('show');
+    }
+
+    function setAllButtonsLoading(isLoading) {
+        elements.actionButtons.forEach(btn => {
+            btn.disabled = isLoading;
+            if (isLoading) {
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = `<span class="loading-spinner"></span>`;
+            } else {
+                btn.innerHTML = btn.dataset.originalText || btn.textContent;
+            }
+        });
+    }
+
+    async function submitRequest(event) {
+      event.preventDefault();
+      
       const form = {
-        title: document.getElementById('title').value,
-        trigger: document.getElementById('trigger').value,
-        actions: document.getElementById('actions').value,
-        notes: document.getElementById('notes').value
+        title: document.getElementById('title').value.trim(),
+        trigger: document.getElementById('trigger').value.trim(),
+        actions: document.getElementById('actions').value.trim(),
+        notes: document.getElementById('notes').value.trim()
       };
 
       if (!form.title || !form.trigger || !form.actions) {
-        alert('Please fill in Title, Trigger, and Actions.');
+        alert('Please fill in all required fields.');
         return;
       }
 
       elements.submitBtn.disabled = true;
-      elements.submitBtn.innerHTML = '<span class="loading-spinner"></span> Submitting...';
+      elements.submitBtn.innerHTML = `<span class="loading-spinner"></span> Submitting...`;
 
       const { data, error } = await supabaseClient
         .from('projects')
@@ -189,92 +190,114 @@
         .single();
 
       elements.submitBtn.disabled = false;
-      elements.submitBtn.textContent = '✅ Submit to Production';
+      elements.submitBtn.innerHTML = '✅ Submit to Production';
 
       if (error) {
         alert(`❌ Error saving project: ${error.message}`);
         return;
       }
       
-      alert('✅ Request submitted successfully!');
       currentProjectId = data.id;
       updateProjectCard(data);
       elements.projectCard.style.display = 'block';
-      document.getElementById('title').form.reset(); // Clear the form
+      elements.projectCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      elements.automationForm.reset();
+      showMessage('✅ Request submitted successfully! You can now manage the project below.', 'success');
     }
 
-    async function callEdgeFunction(action, extraParams = {}) {
+    async function handleActionClick(event) {
+        const button = event.currentTarget;
+        const action = button.dataset.action;
+
+        if (!action) return;
+
+        let extraParams = {};
+        if (action === 'revise') {
+            const feedback = elements.revisionFeedback.value.trim();
+            if (!feedback) {
+                return showMessage('Please enter revision feedback.', 'error');
+            }
+            extraParams.feedback = feedback;
+        }
+
+        if (action === 'deploy' && !confirm('Deploy to Make.com? This will create a live automation.')) {
+            return;
+        }
+
+        await callEdgeFunction(action, button, extraParams);
+    }
+
+    async function callEdgeFunction(action, button, extraParams = {}) {
       if (!currentProjectId) {
-        showMessage('No project ID found. Please submit a project first.', 'error');
-        return;
+        return showMessage('No project ID found. Please submit a project first.', 'error');
       }
       
       hideMessage();
-      setButtonsLoading(true);
-
-      const body = {
-        action: action,
-        project_id: currentProjectId,
-        ...extraParams
-      };
+      setAllButtonsLoading(true);
 
       try {
-        // FIX: The body of invoke must be a string.
         const { data, error } = await supabaseClient.functions.invoke('automation-studio-ts', {
-            body: JSON.stringify(body)
+            body: {
+                action,
+                project_id: currentProjectId,
+                ...extraParams
+            }
         });
 
         if (error) throw new Error(error.message);
-        if (data.error) throw new Error(data.error); // Handle application-level errors from the function
+        if (data.error) throw new Error(data.error);
 
         showMessage(`Action '${action}' completed successfully!`, 'success');
         
         const { data: updatedProject, error: fetchError } = await supabaseClient
-            .from('projects')
-            .select('*')
-            .eq('id', currentProjectId)
-            .single();
+            .from('projects').select('*').eq('id', currentProjectId).single();
         
         if (fetchError) {
             showMessage(`Could not refresh project data: ${fetchError.message}`, 'error');
         } else {
             updateProjectCard(updatedProject);
-            // FIX: Clear revision input after successful submission
             if (action === 'revise') {
                 elements.revisionFeedback.value = '';
             }
         }
         
       } catch (error) {
-        console.error('Invoke Error:', error);
-        showMessage(`Error during '${action}': ${error.message}`, 'error');
+        console.error(`Invoke Error for action '${action}':`, error);
+        showMessage(`Error during '${action}': ${error.message}`, 'error', 0); // Show error indefinitely
       } finally {
-        setButtonsLoading(false);
+        setAllButtonsLoading(false);
       }
     }
     
-    function updateProjectCard(project) {
+    async function updateProjectCard(project) {
         elements.projectTitle.textContent = project.title;
         elements.triggerDesc.textContent = project.trigger_description;
         elements.actionsDesc.textContent = project.actions_description;
         elements.statusBadge.textContent = project.status;
-        elements.statusBadge.className = `status-badge status-${project.status.toLowerCase().replace(/ /g, '-')}`;
+        const statusClass = project.status?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'idea-submitted';
+        elements.statusBadge.className = `status-badge status-${statusClass}`;
         
-        // FIX: Safely handle potentially null blueprint and render diagram
         if (project.blueprint?.diagram_mermaid) {
-            elements.diagram.innerHTML = ''; // Clear previous diagram
-            elements.diagram.removeAttribute('data-processed'); // Reset Mermaid status
-            elements.diagram.appendChild(document.createTextNode(project.blueprint.diagram_mermaid));
-            mermaid.run({ nodes: [elements.diagram] });
+            elements.diagram.innerHTML = ''; // Clear previous
+            try {
+                const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}`, project.blueprint.diagram_mermaid);
+                elements.diagram.innerHTML = svg;
+            } catch (e) {
+                elements.diagram.textContent = '⚠️ Error rendering diagram. Check Mermaid syntax.';
+                console.error("Mermaid rendering error:", e);
+            }
             elements.blueprintSection.style.display = 'block';
         } else {
             elements.blueprintSection.style.display = 'none';
         }
 
-        // FIX: Safely handle potentially null test_results
-        if (project.test_results) {
+        if (typeof project.test_results === 'object' && project.test_results !== null) {
             elements.testResultsSection.textContent = project.test_results.message || 'No message provided.';
             elements.testResultsSection.className = `test-results ${project.test_results.success ? 'test-success' : 'test-error'}`;
+            elements.testResultsSection.style.display = 'block';
+        } else if (typeof project.test_results === 'string') { // Handle plain string case
+            elements.testResultsSection.textContent = project.test_results;
+            elements.testResultsSection.className = 'test-results';
             elements.testResultsSection.style.display = 'block';
         } else {
             elements.testResultsSection.style.display = 'none';
@@ -282,33 +305,20 @@
         
         if (project.output_url) {
             elements.liveLink.href = project.output_url;
+            elements.liveLink.target = "_blank";
+            elements.liveLink.rel = "noopener noreferrer";
             elements.liveLink.textContent = `🔗 Live Automation: ${project.output_url}`;
             elements.liveLink.style.display = 'block';
         } else {
             elements.liveLink.style.display = 'none';
         }
     }
-
-    // === 5. EVENT LISTENERS ===
-    // Make functions globally accessible for onclick attributes
-    window.generateBlueprint = () => callEdgeFunction('generate_blueprint');
-    window.testBlueprint = () => callEdgeFunction('test_blueprint');
-    window.reviseBlueprint = () => {
-      const feedback = elements.revisionFeedback.value;
-      if (!feedback.trim()) {
-        showMessage('Please enter revision feedback.', 'error');
-        return;
-      }
-      callEdgeFunction('revise', { feedback });
-    };
-    window.deployBlueprint = () => {
-      if (confirm('Deploy to Make.com? This will create a live automation.')) {
-        callEdgeFunction('deploy');
-      }
-    };
     
-    elements.submitBtn.addEventListener('click', submitRequest);
+    elements.automationForm.addEventListener('submit', submitRequest);
+    elements.actionButtons.forEach(btn => btn.addEventListener('click', handleActionClick));
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
   </script>
 </body>
 </html>
+
+
