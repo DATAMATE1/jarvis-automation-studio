@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis Automation Studio</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  <style>
+    /* Using Pico.css for base, with your style overrides */
+    body { background: #f8f9fa; color: #212529; }
+    .container { max-width: 900px; }
+    h1, h2 { color: #4a2c8c; }
+    .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05 ); }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-left: 10px; }
+    .status-blueprint-ready { background: #e3f2fd; color: #1976d2; }
+    .status-test-complete { background: #e8f5e9; color: #388e3c; }
+    .status-revision-requested { background: #fff8e1; color: #ff8f00; }
+    .status-completed { background: #e8f5e8; color: #2e7d32; }
+    .status-error { background: #ffebee; color: #d32f2f; }
+    .diagram { background: #f0f0f0; padding: 16px; border-radius: 8px; font-family: monospace; margin: 16px 0; white-space: pre-wrap; border: 1px solid #ddd; }
+    .test-results { margin: 16px 0; padding: 12px; border-radius: 8px; background: #f9f9f9; border-left: 4px solid #ccc; }
+    .test-success { border-left-color: #4caf50; }
+    .test-error { border-left-color: #f44336; }
+    .buttons { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background: #4a2c8c; color: white; }
+    .btn-test { background: #1976d2; color: white; }
+    .btn-revise { background: #ff9800; color: white; }
+    .btn-deploy { background: #4caf50; color: white; }
+    .live-link { display: block; color: #4a2c8c; text-decoration: none; margin-top: 12px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 Jarvis Automation Studio</h1>
+    
+    <div class="card">
+      <h2>New Automation Request</h2>
+      <label>Project Goal (One-Liner)</label>
+      <input id="title" placeholder="e.g., Automate new lead entry into HubSpot & Slack">
+      <label>Trigger (What starts it?)</label>
+      <input id="trigger_description" placeholder="e.g., New form submission on 'Contact Us' Typeform">
+      <label>Actions (What should happen?)</label>
+      <textarea id="actions_description" placeholder="e.g., Take 'Email', 'Name'... In HubSpot: Find or Create Contact..."></textarea>
+      <label>The 'Gotcha' (Any if-then rules?)</label>
+      <textarea id="notes" placeholder="e.g., IF Budget > $10k, THEN tag 'High-Priority'"></textarea>
+      <button class="btn btn-primary" id="submitBtn">✅ Submit to Production</button>
+    </div>
+
+    <!-- Dashboard View (Initially Hidden) -->
+    <div class="card" id="projectCard" style="display:none;">
+      <h2 id="projectTitle"></h2>
+      <div><strong>Trigger:</strong> <span id="triggerDesc"></span></div>
+      <div><strong>Actions:</strong> <span id="actionsDesc"></span></div>
+      <div style="margin: 16px 0;"><strong>Status:</strong><span id="statusBadge" class="status-badge"></span></div>
+      <div class="diagram" id="diagram" style="display:none;"></div>
+      <div class="test-results" id="testResults" style="display:none;"></div>
+      <textarea class="revise-input" id="revisionFeedback" placeholder="Type your revision request (e.g., 'Use Telegram instead of WhatsApp')"></textarea>
+      <div class="buttons">
+        <button class="btn btn-primary" onclick="generateBlueprint()">Generate Blueprint</button>
+        <button class="btn btn-test" onclick="testBlueprint()">Test</button>
+        <button class="btn btn-revise" onclick="reviseBlueprint()">Revise</button>
+        <button class="btn btn-deploy" onclick="deployBlueprint()">Deploy</button>
+      </div>
+      <a href="#" class="live-link" id="liveLink" style="display:none;"></a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // === CONFIGURE THESE ===
+    // **FIXED**: Values must be strings (in quotes )
+    const SUPABASE_URL = "https://lbbsbiufwdjatjlhpvsg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+
+    // **IMPROVEMENT**: This will hold the ID of the project we are working on.
+    let activeProjectId = null;
+
+    const submitBtn = document.getElementById('submitBtn');
+
+    async function callEdgeFunction(action, extraParams = {}) {
+      if (!activeProjectId) return alert('❌ No active project selected!');
+      
+      const body = { project_id: activeProjectId, action, ...extraParams };
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/automation-studio`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        
+        alert(`✅ ${action} successful!`);
+        // Refresh the project view after a successful action
+        loadProject(activeProjectId);
+      } catch (error) {
+        alert(`❌ Error during '${action}': ${error.message}`);
+      }
+    }
+
+    async function submitRequest() {
+      const projectData = {
+        title: document.getElementById('title').value,
+        trigger_description: document.getElementById('trigger_description').value,
+        actions_description: document.getElementById('actions_description').value,
+        notes: document.getElementById('notes').value,
+        status: 'Idea Submitted' // Use the correct initial status
+      };
+
+      if (!projectData.title || !projectData.trigger_description || !projectData.actions_description) {
+        return alert('Please fill in Title, Trigger, and Actions.');
+      }
+      
+      submitBtn.setAttribute('aria-busy', 'true');
+      
+      // **FIXED**: Actually insert the data into Supabase
+      const { data, error } = await supabaseClient.from('projects').insert(projectData).select().single();
+      
+      submitBtn.setAttribute('aria-busy', 'false');
+
+      if (error) return alert(`❌ Error submitting request: ${error.message}`);
+      
+      alert('✅ Request submitted! Your automation is being processed.');
+      // **IMPROVEMENT**: Load the newly created project into the dashboard view
+      loadProject(data.id);
+    }
+    
+    // **NEW**: Function to load a specific project into the view
+    function loadProject(projectId) {
+        activeProjectId = projectId;
+        const project = supabaseClient.from('projects').select('*').eq('id', projectId).single().then(({ data, error }) => {
+            if (error) return alert(`❌ Could not load project: ${error.message}`);
+
+            document.getElementById('projectTitle').textContent = data.title;
+            document.getElementById('triggerDesc').textContent = data.trigger_description;
+            document.getElementById('actionsDesc').textContent = data.actions_description;
+            
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = data.status;
+            statusBadge.className = `status-badge status-${data.status.toLowerCase().replace(/ /g, '-')}`;
+
+            const diagramEl = document.getElementById('diagram');
+            if (data.blueprint && data.blueprint.diagram_mermaid) {
+                diagramEl.textContent = data.blueprint.diagram_mermaid;
+                diagramEl.style.display = 'block';
+            } else {
+                diagramEl.style.display = 'none';
+            }
+
+            const testResultsEl = document.getElementById('testResults');
+            if (data.test_results) {
+                testResultsEl.textContent = data.test_results.message;
+                testResultsEl.className = `test-results ${data.test_results.success ? 'test-success' : 'test-error'}`;
+                testResultsEl.style.display = 'block';
+            } else {
+                testResultsEl.style.display = 'none';
+            }
+
+            const liveLinkEl = document.getElementById('liveLink');
+            if (data.output_url) {
+                liveLinkEl.href = data.output_url;
+                liveLinkEl.textContent = `🔗 Live Automation: ${data.output_url}`;
+                liveLinkEl.style.display = 'block';
+            } else {
+                liveLinkEl.style.display = 'none';
+            }
+            
+            document.getElementById('projectCard').style.display = 'block';
+        });
+    }
+
+    // --- Button Functions ---
+    function generateBlueprint() { callEdgeFunction('generate_blueprint'); }
+    function testBlueprint() { callEdgeFunction('test_blueprint'); }
+    function reviseBlueprint() {
+      const feedback = document.getElementById('revisionFeedback').value;
+      if (!feedback.trim()) return alert('Please enter revision feedback.');
+      // **FIXED**: Correctly pass feedback as an object
+      callEdgeFunction('revise', { feedback });
+    }
+    function deployBlueprint() {
+      if (confirm('Deploy to Make.com? This will create a live automation.')) {
+        callEdgeFunction('deploy');
+      }
+    }
+
+    // --- Initial Setup ---
+    submitBtn.addEventListener('click', submitRequest);
+  </script>
+</body>
+</html>
