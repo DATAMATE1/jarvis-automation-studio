@@ -4,31 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jarvis Automation Studio</title>
-  <!-- This is the correct Supabase script that exposes 'window.supabase' -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8f9fa;
-      color: #1a1a1a;
-      margin: 0;
-      padding: 20px;
-      line-height: 1.6;
-      scroll-behavior: smooth;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #1a1a1a; margin: 0; padding: 20px; line-height: 1.6; scroll-behavior: smooth; }
     .container { max-width: 800px; margin: 0 auto; }
     h1, h2 { color: #4a2c8c; }
     h1 { text-align: center; margin-bottom: 30px; }
     .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05 ); }
     label { display: block; margin-top: 16px; font-weight: 600; color: #333; }
     input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    form { display: contents; }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: all 0.2s; }
-    .btn:hover:not(:disabled) { opacity: 0.9; }
+    .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
     .btn:disabled { cursor: not-allowed; opacity: 0.6; }
     .btn-primary { background: #4a2c8c; color: white; }
+    .btn-generate { background: #4a2c8c; color: white; }
+    .btn-test { background: #1976d2; color: white; }
+    .btn-revise { background: #ff9800; color: white; }
+    .btn-deploy { background: #4caf50; color: white; }
     .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-left: 10px; }
+    .status-idea-submitted { background: #f3e5f5; color: #7b1fa2; }
+    .status-blueprint-ready { background: #e3f2fd; color: #1976d2; }
+    .status-test-complete { background: #e8f5e9; color: #388e3c; }
+    .status-revision-requested { background: #fff8e1; color: #ff8f00; }
+    .status-completed { background: #e8f5e8; color: #2e7d32; }
+    .diagram { background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0; border: 1px solid #eee; text-align: center; }
+    .buttons { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    #projectHistory .project-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
+    #projectHistory .project-item:hover { background-color: #f5f5f5; }
+    #projectHistory .project-item.active { border-left: 3px solid #4a2c8c; background-color: #f3e5f5; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -38,93 +43,239 @@
     <div class="card">
       <form id="automationForm">
         <h2>New Automation Request</h2>
-        <label for="title">Project Goal (One-Liner)</label>
+        <label for="title">Project Goal</label>
         <input id="title" placeholder="e.g., Automate new lead entry" required>
-        
-        <label for="trigger">Trigger (What starts it?)</label>
+        <label for="trigger">Trigger</label>
         <input id="trigger" placeholder="e.g., New form submission" required>
-        
-        <label for="actions">Actions (What should happen?)</label>
+        <label for="actions">Actions</label>
         <textarea id="actions" placeholder="e.g., Create contact in HubSpot" required></textarea>
-        
-        <label for="notes">The 'Gotcha' (Any if-then rules?)</label>
+        <label for="notes">Notes</label>
         <textarea id="notes" placeholder="e.g., IF Budget > $10k, tag 'High-Priority'"></textarea>
-        
-        <button id="submitBtn" type="submit" class="btn btn-primary">
-          ✅ Submit to Production
-        </button>
+        <button id="submitBtn" type="submit" class="btn btn-primary">✅ Submit Idea</button>
       </form>
     </div>
 
-    <!-- This card will appear after you submit a project -->
+    <div class="card" id="historyCard">
+        <h2>Project History</h2>
+        <div id="projectHistory"><p>Loading history...</p></div>
+    </div>
+
     <div class="card" id="projectCard" style="display:none;">
-      <h2>Project Details</h2>
-      <p>This is where the project information will appear once it is connected to Supabase.</p>
+      <h2 id="projectTitle"></h2>
+      <div><strong>Trigger:</strong> <span id="triggerDesc"></span></div>
+      <div><strong>Actions:</strong> <span id="actionsDesc"></span></div>
+      <div style="margin: 16px 0;"><strong>Status:</strong> <span id="statusBadge" class="status-badge"></span></div>
+      <div id="blueprintSection" style="display:none;">
+        <div class="diagram" id="diagram"></div>
+      </div>
+      <div id="inlineMessage" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none;"></div>
+      <textarea id="revisionFeedback" placeholder="Type your revision request here..." style="width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;"></textarea>
+      <div class="buttons">
+        <button type="button" class="btn btn-generate" data-action="generate_blueprint">Generate Blueprint</button>
+        <!-- FIX: Corrected data-action typo -->
+        <button type="button" class="btn btn-test" data-action="test_blueprint">Test</button>
+        <button type="button" class="btn btn-revise" data-action="revise">Revise</button>
+        <button type="button" class="btn btn-deploy" data-action="deploy">Deploy to Make.com</button>
+      </div>
+      <a href="#" id="liveLink" style="display:none; color: #4a2c8c; text-decoration: none; margin-top: 12px; font-weight: bold;"></a>
     </div>
   </div>
 
   <script>
-    // --- CONFIGURATION ---
     const SUPABASE_URL = 'https://lbbsbiufwdjatjlhpvsg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg';
-    
-    // --- INITIALIZATION ---
-    // This line was the problem. It now correctly uses 'window.supabase' which is provided by the script in the <head>.
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
-    console.log('✅ Supabase client initialized successfully. The page is NOT static.');
+
+    // FIX: Dynamically load Mermaid to avoid race conditions
+    (function loadMermaid() {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.textContent = `
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        window.mermaid = mermaid;
+        window.mermaid.initialize({ startOnLoad: false, theme: 'default' } );
+        window.mermaidReady = true;
+        console.log('✅ Mermaid loaded and initialized.');
+      `;
+      document.head.appendChild(script);
+    })();
 
     const elements = {
         automationForm: document.getElementById('automationForm'),
         submitBtn: document.getElementById('submitBtn'),
-        projectCard: document.getElementById('projectCard')
+        projectHistory: document.getElementById('projectHistory'),
+        projectCard: document.getElementById('projectCard'),
+        projectTitle: document.getElementById('projectTitle'),
+        triggerDesc: document.getElementById('triggerDesc'),
+        actionsDesc: document.getElementById('actionsDesc'),
+        statusBadge: document.getElementById('statusBadge'),
+        blueprintSection: document.getElementById('blueprintSection'),
+        diagram: document.getElementById('diagram'),
+        revisionFeedback: document.getElementById('revisionFeedback'),
+        liveLink: document.getElementById('liveLink'),
+        inlineMessage: document.getElementById('inlineMessage'),
+        actionButtons: document.querySelectorAll('#projectCard .btn')
     };
+    let currentProjectId = null;
+    let allProjects = [];
 
-    // --- MAIN FUNCTION ---
     async function submitRequest(event) {
-      event.preventDefault(); // Stop the page from reloading
-      
+      event.preventDefault();
       const form = {
         title: document.getElementById('title').value.trim(),
         trigger: document.getElementById('trigger').value.trim(),
         actions: document.getElementById('actions').value.trim(),
         notes: document.getElementById('notes').value.trim()
       };
+      if (!form.title || !form.trigger || !form.actions) return alert('Please fill in all required fields.');
 
-      if (!form.title || !form.trigger || !form.actions) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-
-      // --- UI FEEDBACK ---
       elements.submitBtn.disabled = true;
       elements.submitBtn.innerHTML = `<span class="loading-spinner"></span> Submitting...`;
-      
-      // --- DATABASE INTERACTION ---
-      // We will uncomment this later. For now, we just want to prove the button works.
-      console.log('Submitting the following data to Supabase:', form);
-      alert('✅ Form submitted! Check the console (F12) to see the data. The page is now interactive.');
-      
-      // --- UPDATE UI ---
-      elements.projectCard.innerHTML = `
-        <h2>${form.title}</h2>
-        <p><strong>Trigger:</strong> ${form.trigger}</p>
-        <p><strong>Actions:</strong> ${form.actions}</p>
-        <p><strong>Notes:</strong> ${form.notes}</p>
-        <p><strong>Status:</strong> Successfully Submitted (Not saved to DB yet)</p>
-      `;
-      elements.projectCard.style.display = 'block';
-      elements.projectCard.scrollIntoView({ behavior: 'smooth' });
 
-      // --- RESET BUTTON ---
+      const { error } = await supabaseClient.from('projects').insert({ 
+            title: form.title, trigger_description: form.trigger, 
+            actions_description: form.actions, notes: form.notes, status: 'Idea Submitted' 
+      });
+      
       elements.submitBtn.disabled = false;
-      elements.submitBtn.innerHTML = '✅ Submit to Production';
+      elements.submitBtn.innerHTML = '✅ Submit Idea';
+
+      if (error) return alert(`❌ Error saving project: ${error.message}`);
+      
       elements.automationForm.reset();
+      await loadProjectHistory();
     }
 
-    // --- EVENT LISTENER ---
-    elements.automationForm.addEventListener('submit', submitRequest);
-    console.log('✅ Event listener attached. The page is ready.');
+    async function loadProjectHistory() {
+        const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
+        if (error) return elements.projectHistory.innerHTML = '<p>Could not load project history.</p>';
+        
+        allProjects = data;
+        if (allProjects.length === 0) return elements.projectHistory.innerHTML = '<p>No projects yet. Submit one above.</p>';
+        
+        elements.projectHistory.innerHTML = allProjects.map(p => 
+            `<div class="project-item" data-id="${p.id}">
+                <strong>${p.title}</strong>  
 
+                <small>Status: ${p.status} | Created: ${new Date(p.created_at).toLocaleDateString()}</small>
+            </div>`
+        ).join('');
+
+        document.querySelectorAll('#projectHistory .project-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const projectId = item.dataset.id;
+                document.querySelectorAll('#projectHistory .project-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+                const project = allProjects.find(p => p.id === projectId);
+                if (project) displayProject(project);
+            });
+        });
+    }
+
+    function displayProject(project) {
+        currentProjectId = project.id;
+        elements.projectTitle.textContent = project.title;
+        elements.triggerDesc.textContent = project.trigger_description;
+        elements.actionsDesc.textContent = project.actions_description;
+        updateStatus(project.status);
+        
+        // FIX: Safe Mermaid rendering with retry logic
+        if (project.blueprint?.diagram_mermaid) {
+            if (window.mermaidReady) {
+                elements.diagram.innerHTML = 'Rendering diagram...';
+                window.mermaid.render(`mermaid-svg-${project.id}`, project.blueprint.diagram_mermaid)
+                    .then(({svg}) => { elements.diagram.innerHTML = svg; })
+                    .catch(err => {
+                        elements.diagram.innerHTML = '⚠️ Diagram rendering error';
+                        console.error('Mermaid render error:', err);
+                    });
+            } else {
+                elements.diagram.textContent = '⏳ Loading diagram renderer...';
+                setTimeout(() => displayProject(project), 500); // Retry after a moment
+            }
+            elements.blueprintSection.style.display = 'block';
+        } else {
+            elements.blueprintSection.style.display = 'none';
+        }
+
+        if (project.output_url) {
+            elements.liveLink.href = project.output_url;
+            elements.liveLink.target = "_blank";
+            elements.liveLink.textContent = `🔗 Live Automation Link: ${project.output_url}`;
+            elements.liveLink.style.display = 'block';
+        } else {
+            elements.liveLink.style.display = 'none';
+        }
+
+        elements.projectCard.style.display = 'block';
+        elements.projectCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function updateStatus(status) {
+        elements.statusBadge.textContent = status;
+        const statusClass = status?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'idea-submitted';
+        elements.statusBadge.className = `status-badge status-${statusClass}`;
+    }
+
+    function showMessage(message, isError = false) {
+        elements.inlineMessage.textContent = message;
+        elements.inlineMessage.style.display = 'block';
+        elements.inlineMessage.style.background = isError ? '#ffebee' : '#e8f5e9';
+        elements.inlineMessage.style.color = isError ? '#d32f2f' : '#2e7d32';
+        setTimeout(() => elements.inlineMessage.style.display = 'none', 5000);
+    }
+
+    // FIX: Improved loading state for action buttons
+    async function handleActionClick(event) {
+        const button = event.currentTarget;
+        const action = button.dataset.action;
+        if (!currentProjectId) return alert('Please select a project first.');
+
+        let extraParams = {};
+        if (action === 'revise') {
+            const feedback = elements.revisionFeedback.value.trim();
+            if (!feedback) return showMessage('Please enter revision feedback before submitting.', true);
+            extraParams.feedback = feedback;
+        }
+
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<span class="loading-spinner"></span>';
+        elements.actionButtons.forEach(btn => btn.disabled = true);
+        
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('automation-studio-ts', {
+                body: { action, project_id: currentProjectId, ...extraParams }
+            });
+
+            if (error) throw new Error(error.message);
+            if (data?.error) throw new Error(data.error);
+
+            showMessage(`Action '${action}' completed successfully! Refreshing...`, false);
+            
+            const { data: updatedProject, error: fetchError } = await supabaseClient
+                .from('projects').select('*').eq('id', currentProjectId).single();
+            
+            if (fetchError) throw new Error('Could not refresh project data.');
+            
+            displayProject(updatedProject);
+            if(action === 'revise') elements.revisionFeedback.value = '';
+
+        } catch (err) {
+            showMessage(`Error during '${action}': ${err.message}`, true);
+            console.error("Action Click Error:", err);
+        } finally {
+            button.innerHTML = originalHTML; // Restore only the clicked button's text
+            elements.actionButtons.forEach(btn => btn.disabled = false); // Re-enable all buttons
+        }
+    }
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+        elements.automationForm.addEventListener('submit', submitRequest);
+        elements.actionButtons.forEach(btn => btn.addEventListener('click', handleActionClick));
+        loadProjectHistory();
+        console.log('✅ Application initialized. Ready for user input.');
+    });
   </script>
 </body>
 </html>
