@@ -1,281 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jarvis Automation Studio</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://kit.fontawesome.com/a2e0e6ad5a.js" crossorigin="anonymous"></script>
+
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #1a1a1a; margin: 0; padding: 20px; line-height: 1.6; scroll-behavior: smooth; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1, h2 { color: #4a2c8c; }
-    h1 { text-align: center; margin-bottom: 30px; }
-    .card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05 ); }
-    label { display: block; margin-top: 16px; font-weight: 600; color: #333; }
-    input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: all 0.2s; }
-    .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    .btn:disabled { cursor: not-allowed; opacity: 0.6; }
-    .btn-primary { background: #4a2c8c; color: white; }
-    .btn-generate { background: #4a2c8c; color: white; }
-    .btn-test { background: #1976d2; color: white; }
-    .btn-revise { background: #ff9800; color: white; }
-    .btn-deploy { background: #4caf50; color: white; }
-    .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-left: 10px; }
-    .status-idea-submitted { background: #f3e5f5; color: #7b1fa2; }
-    .status-blueprint-ready { background: #e3f2fd; color: #1976d2; }
-    .status-test-complete { background: #e8f5e9; color: #388e3c; }
-    .status-revision-requested { background: #fff8e1; color: #ff8f00; }
-    .status-completed { background: #e8f5e8; color: #2e7d32; }
-    .diagram { background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0; border: 1px solid #eee; text-align: center; }
-    .buttons { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-    #projectHistory .project-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
-    #projectHistory .project-item:hover { background-color: #f5f5f5; }
-    #projectHistory .project-item.active { border-left: 3px solid #4a2c8c; background-color: #f3e5f5; font-weight: bold; }
+    body {
+      background-color: #0b0b0f;
+      color: white;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      background-color: #1a1a23;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 0 20px rgba(255,255,255,0.05 );
+    }
+    .btn {
+      background-color: #9c4dff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      color: white;
+      font-weight: 600;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .btn:hover:not(:disabled) { background-color: #7e3be0; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>🤖 Jarvis Automation Studio</h1>
-    
+
+<body class="min-h-screen p-8">
+  <h1 class="text-4xl font-bold mb-6 text-center">🚀 Jarvis Automation Studio</h1>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Create Project -->
     <div class="card">
-      <form id="automationForm">
-        <h2>New Automation Request</h2>
-        <label for="title">Project Goal</label>
-        <input id="title" placeholder="e.g., Automate new lead entry" required>
-        <label for="trigger">Trigger</label>
-        <input id="trigger" placeholder="e.g., New form submission" required>
-        <label for="actions">Actions</label>
-        <textarea id="actions" placeholder="e.g., Create contact in HubSpot" required></textarea>
-        <label for="notes">Notes</label>
-        <textarea id="notes" placeholder="e.g., IF Budget > $10k, tag 'High-Priority'"></textarea>
-        <button id="submitBtn" type="submit" class="btn btn-primary">✅ Submit Idea</button>
+      <h2 class="text-2xl font-semibold mb-4">Create New Project</h2>
+      <form id="projectForm" class="space-y-3">
+        <input name="title" class="w-full p-2 rounded bg-gray-800 text-white" placeholder="Project Title" required />
+        <textarea name="trigger" class="w-full p-2 rounded bg-gray-800 text-white" placeholder="Trigger description..." required></textarea>
+        <textarea name="actions" class="w-full p-2 rounded bg-gray-800 text-white" placeholder="Actions description..." required></textarea>
+        <textarea name="notes" class="w-full p-2 rounded bg-gray-800 text-white" placeholder="Notes (optional)"></textarea>
+        <button type="submit" id="submitBtn" class="btn w-full"><i class="fas fa-rocket mr-2"></i>Create Project</button>
       </form>
+      <p id="formMessage" class="mt-3 text-sm"></p>
     </div>
 
-    <div class="card" id="historyCard">
-        <h2>Project History</h2>
-        <div id="projectHistory"><p>Loading history...</p></div>
-    </div>
-
-    <div class="card" id="projectCard" style="display:none;">
-      <h2 id="projectTitle"></h2>
-      <div><strong>Trigger:</strong> <span id="triggerDesc"></span></div>
-      <div><strong>Actions:</strong> <span id="actionsDesc"></span></div>
-      <div style="margin: 16px 0;"><strong>Status:</strong> <span id="statusBadge" class="status-badge"></span></div>
-      <div id="blueprintSection" style="display:none;">
-        <div class="diagram" id="diagram"></div>
+    <!-- Projects List -->
+    <div class="card">
+      <h2 class="text-2xl font-semibold mb-4">Your Projects</h2>
+      <div id="projectsList" class="space-y-3">
+        <p class="text-gray-400">Loading projects...</p>
       </div>
-      <div id="inlineMessage" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none;"></div>
-      <textarea id="revisionFeedback" placeholder="Type your revision request here..." style="width: 100%; padding: 12px; margin: 12px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;"></textarea>
-      <div class="buttons">
-        <button type="button" class="btn btn-generate" data-action="generate_blueprint">Generate Blueprint</button>
-        <!-- FIX: Corrected data-action typo -->
-        <button type="button" class="btn btn-test" data-action="test_blueprint">Test</button>
-        <button type="button" class="btn btn-revise" data-action="revise">Revise</button>
-        <button type="button" class="btn btn-deploy" data-action="deploy">Deploy to Make.com</button>
-      </div>
-      <a href="#" id="liveLink" style="display:none; color: #4a2c8c; text-decoration: none; margin-top: 12px; font-weight: bold;"></a>
     </div>
   </div>
 
+  <!-- This div is for the Mermaid diagram, if you choose to add it back later -->
+  <div id="diagram-container" class="card mt-6" style="display:none;">
+    <h2 class="text-2xl font-semibold mb-4">Blueprint Diagram</h2>
+    <div id="diagram"></div>
+  </div>
+
   <script>
-    const SUPABASE_URL = 'https://lbbsbiufwdjatjlhpvsg.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg';
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    // --- ✅ FIXED: YOUR SUPABASE DETAILS ---
+    const SUPABASE_URL = "https://lbbsbiufwdjatjlhpvsg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg";
+    const EDGE_FUNCTION_URL = "https://lbbsbiufwdjatjlhpvsg.supabase.co/functions/v1/automation-studio-ts";
 
-    // FIX: Dynamically load Mermaid to avoid race conditions
-    (function loadMermaid() {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.textContent = `
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        window.mermaid = mermaid;
-        window.mermaid.initialize({ startOnLoad: false, theme: 'default' } );
-        window.mermaidReady = true;
-        console.log('✅ Mermaid loaded and initialized.');
-      `;
-      document.head.appendChild(script);
-    })();
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-    const elements = {
-        automationForm: document.getElementById('automationForm'),
-        submitBtn: document.getElementById('submitBtn'),
-        projectHistory: document.getElementById('projectHistory'),
-        projectCard: document.getElementById('projectCard'),
-        projectTitle: document.getElementById('projectTitle'),
-        triggerDesc: document.getElementById('triggerDesc'),
-        actionsDesc: document.getElementById('actionsDesc'),
-        statusBadge: document.getElementById('statusBadge'),
-        blueprintSection: document.getElementById('blueprintSection'),
-        diagram: document.getElementById('diagram'),
-        revisionFeedback: document.getElementById('revisionFeedback'),
-        liveLink: document.getElementById('liveLink'),
-        inlineMessage: document.getElementById('inlineMessage'),
-        actionButtons: document.querySelectorAll('#projectCard .btn')
-    };
-    let currentProjectId = null;
-    let allProjects = [];
+    // 🧩 Helper to show messages
+    function showMessage(elId, msg, type = "success") {
+      const el = document.getElementById(elId);
+      el.innerText = msg;
+      el.className = type === "error" ? "text-red-400" : "text-green-400";
+    }
 
-    async function submitRequest(event) {
-      event.preventDefault();
-      const form = {
-        title: document.getElementById('title').value.trim(),
-        trigger: document.getElementById('trigger').value.trim(),
-        actions: document.getElementById('actions').value.trim(),
-        notes: document.getElementById('notes').value.trim()
-      };
-      if (!form.title || !form.trigger || !form.actions) return alert('Please fill in all required fields.');
+    // 🧾 Load all projects
+    async function loadProjects() {
+      const list = document.getElementById("projectsList");
+      list.innerHTML = "<p class='text-gray-400'>Loading...</p>";
 
-      elements.submitBtn.disabled = true;
-      elements.submitBtn.innerHTML = `<span class="loading-spinner"></span> Submitting...`;
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      const { error } = await supabaseClient.from('projects').insert({ 
-            title: form.title, trigger_description: form.trigger, 
-            actions_description: form.actions, notes: form.notes, status: 'Idea Submitted' 
+      if (error) {
+        list.innerHTML = "<p class='text-red-400'>Error loading projects.</p>";
+        return;
+      }
+      if (!data.length) {
+        list.innerHTML = "<p class='text-gray-400'>No projects found.</p>";
+        return;
+      }
+
+      list.innerHTML = "";
+      data.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "border border-gray-700 rounded p-3";
+        div.innerHTML = `
+          <h3 class="text-xl font-semibold mb-1">${p.title}</h3>
+          <p class="text-gray-400 text-sm mb-2">${p.status || "draft"} — ${new Date(p.created_at).toLocaleString()}</p>
+          <p class="text-gray-300 mb-3">${p.trigger_description || ""}</p>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn text-sm" onclick="triggerAction('${p.id}','generate_blueprint')"><i class='fas fa-code-branch mr-1'></i>Generate</button>
+            <button class="btn text-sm" onclick="triggerAction('${p.id}','test_blueprint')"><i class='fas fa-vial mr-1'></i>Test</button>
+            <button class="btn text-sm" onclick="triggerAction('${p.id}','deploy')"><i class='fas fa-play mr-1'></i>Deploy</button>
+            <button class="btn text-sm bg-red-800 hover:bg-red-700" onclick="deleteProject('${p.id}')"><i class='fas fa-trash mr-1'></i>Delete</button>
+          </div>
+          ${p.output_url ? `<p class='mt-2 text-green-400 font-semibold'><a href='${p.output_url}' target='_blank'>✅ Open Live Scenario ↗</a></p>` : ""}
+          ${p.error_log ? `<p class='mt-2 text-red-400 font-semibold'>❌ Error: ${p.error_log}</p>` : ""}
+        `;
+        list.appendChild(div);
       });
+    }
+
+    // 🗑️ Delete project
+    async function deleteProject(id) {
+      if (!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+      await supabase.from("projects").delete().eq("id", id);
+      loadProjects();
+    }
+
+    // 🚀 Call automation-studio Edge Function
+    async function triggerAction(projectId, action) {
+      alert(`Sending action: '${action}' for project ID: ${projectId}`);
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          // The Authorization header is often needed when calling functions directly
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ project_id: projectId, action }),
+      });
+      const result = await res.json();
       
-      elements.submitBtn.disabled = false;
-      elements.submitBtn.innerHTML = '✅ Submit Idea';
-
-      if (error) return alert(`❌ Error saving project: ${error.message}`);
+      if (result.error) {
+        alert("❌ Error: " + result.error);
+      } else {
+        alert("✅ Success: " + (result.message || "Action complete. Refreshing..."));
+      }
       
-      elements.automationForm.reset();
-      await loadProjectHistory();
+      loadProjects();
     }
 
-    async function loadProjectHistory() {
-        const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
-        if (error) return elements.projectHistory.innerHTML = '<p>Could not load project history.</p>';
-        
-        allProjects = data;
-        if (allProjects.length === 0) return elements.projectHistory.innerHTML = '<p>No projects yet. Submit one above.</p>';
-        
-        elements.projectHistory.innerHTML = allProjects.map(p => 
-            `<div class="project-item" data-id="${p.id}">
-                <strong>${p.title}</strong>  
+    // 🆕 Create new project
+    document.getElementById("projectForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const btn = document.getElementById("submitBtn");
 
-                <small>Status: ${p.status} | Created: ${new Date(p.created_at).toLocaleDateString()}</small>
-            </div>`
-        ).join('');
+      btn.innerText = "Creating...";
+      btn.disabled = true;
 
-        document.querySelectorAll('#projectHistory .project-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const projectId = item.dataset.id;
-                document.querySelectorAll('#projectHistory .project-item').forEach(el => el.classList.remove('active'));
-                item.classList.add('active');
-                const project = allProjects.find(p => p.id === projectId);
-                if (project) displayProject(project);
-            });
-        });
-    }
+      const { error } = await supabase.from("projects").insert([{
+        title: fd.get("title"),
+        trigger_description: fd.get("trigger"),
+        actions_description: fd.get("actions"),
+        notes: fd.get("notes"),
+        status: "Idea Submitted",
+      }]);
 
-    function displayProject(project) {
-        currentProjectId = project.id;
-        elements.projectTitle.textContent = project.title;
-        elements.triggerDesc.textContent = project.trigger_description;
-        elements.actionsDesc.textContent = project.actions_description;
-        updateStatus(project.status);
-        
-        // FIX: Safe Mermaid rendering with retry logic
-        if (project.blueprint?.diagram_mermaid) {
-            if (window.mermaidReady) {
-                elements.diagram.innerHTML = 'Rendering diagram...';
-                window.mermaid.render(`mermaid-svg-${project.id}`, project.blueprint.diagram_mermaid)
-                    .then(({svg}) => { elements.diagram.innerHTML = svg; })
-                    .catch(err => {
-                        elements.diagram.innerHTML = '⚠️ Diagram rendering error';
-                        console.error('Mermaid render error:', err);
-                    });
-            } else {
-                elements.diagram.textContent = '⏳ Loading diagram renderer...';
-                setTimeout(() => displayProject(project), 500); // Retry after a moment
-            }
-            elements.blueprintSection.style.display = 'block';
-        } else {
-            elements.blueprintSection.style.display = 'none';
-        }
-
-        if (project.output_url) {
-            elements.liveLink.href = project.output_url;
-            elements.liveLink.target = "_blank";
-            elements.liveLink.textContent = `🔗 Live Automation Link: ${project.output_url}`;
-            elements.liveLink.style.display = 'block';
-        } else {
-            elements.liveLink.style.display = 'none';
-        }
-
-        elements.projectCard.style.display = 'block';
-        elements.projectCard.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function updateStatus(status) {
-        elements.statusBadge.textContent = status;
-        const statusClass = status?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'idea-submitted';
-        elements.statusBadge.className = `status-badge status-${statusClass}`;
-    }
-
-    function showMessage(message, isError = false) {
-        elements.inlineMessage.textContent = message;
-        elements.inlineMessage.style.display = 'block';
-        elements.inlineMessage.style.background = isError ? '#ffebee' : '#e8f5e9';
-        elements.inlineMessage.style.color = isError ? '#d32f2f' : '#2e7d32';
-        setTimeout(() => elements.inlineMessage.style.display = 'none', 5000);
-    }
-
-    // FIX: Improved loading state for action buttons
-    async function handleActionClick(event) {
-        const button = event.currentTarget;
-        const action = button.dataset.action;
-        if (!currentProjectId) return alert('Please select a project first.');
-
-        let extraParams = {};
-        if (action === 'revise') {
-            const feedback = elements.revisionFeedback.value.trim();
-            if (!feedback) return showMessage('Please enter revision feedback before submitting.', true);
-            extraParams.feedback = feedback;
-        }
-
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<span class="loading-spinner"></span>';
-        elements.actionButtons.forEach(btn => btn.disabled = true);
-        
-        try {
-            const { data, error } = await supabaseClient.functions.invoke('automation-studio-ts', {
-                body: { action, project_id: currentProjectId, ...extraParams }
-            });
-
-            if (error) throw new Error(error.message);
-            if (data?.error) throw new Error(data.error);
-
-            showMessage(`Action '${action}' completed successfully! Refreshing...`, false);
-            
-            const { data: updatedProject, error: fetchError } = await supabaseClient
-                .from('projects').select('*').eq('id', currentProjectId).single();
-            
-            if (fetchError) throw new Error('Could not refresh project data.');
-            
-            displayProject(updatedProject);
-            if(action === 'revise') elements.revisionFeedback.value = '';
-
-        } catch (err) {
-            showMessage(`Error during '${action}': ${err.message}`, true);
-            console.error("Action Click Error:", err);
-        } finally {
-            button.innerHTML = originalHTML; // Restore only the clicked button's text
-            elements.actionButtons.forEach(btn => btn.disabled = false); // Re-enable all buttons
-        }
-    }
-
-    // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
-        elements.automationForm.addEventListener('submit', submitRequest);
-        elements.actionButtons.forEach(btn => btn.addEventListener('click', handleActionClick));
-        loadProjectHistory();
-        console.log('✅ Application initialized. Ready for user input.');
+      if (error) {
+        showMessage("formMessage", "❌ Error creating project: " + error.message, "error");
+      } else {
+        showMessage("formMessage", "✅ Project created successfully!");
+        form.reset();
+        loadProjects();
+      }
+      btn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Create Project';
+      btn.disabled = false;
     });
+
+    // Initial load
+    loadProjects();
   </script>
 </body>
 </html>
