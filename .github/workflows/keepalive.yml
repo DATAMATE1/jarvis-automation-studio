@@ -9,7 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase Project
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/"
+          echo "Pinging URL: $SUPABASE_URL"
+          
+          # Use curl and capture the HTTP status code
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/projects?select=id&limit=1" )
+            
+          echo "Received status code: $HTTP_STATUS"
+          
+          # Check if the status code is a success code (2xx)
+          if [[ "$HTTP_STATUS" -ge 200 && "$HTTP_STATUS" -lt 300 ]]; then
+            echo "✅ Success! Ping was successful."
+          else
+            echo "❌ Failure! Received non-success status code."
+            exit 1
+          fi
