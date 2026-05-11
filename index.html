@@ -11,383 +11,120 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #07070d;
-      --surface: #0f0f1a;
-      --surface2: #16162a;
-      --surface3: #1e1e35;
-      --border: #2a2a45;
-      --border2: #3a3a60;
-      --accent: #7c3aed;
-      --accent2: #a855f7;
-      --accent-glow: rgba(124,58,237,0.25);
-      --green: #10b981;
-      --green-dim: rgba(16,185,129,0.15);
-      --amber: #f59e0b;
-      --amber-dim: rgba(245,158,11,0.15);
-      --red: #ef4444;
-      --red-dim: rgba(239,68,68,0.12);
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --radius: 12px;
+      --bg: #07070d; --surface: #0f0f1a; --surface2: #16162a; --surface3: #1e1e35;
+      --border: #2a2a45; --border2: #3a3a60;
+      --accent: #7c3aed; --accent2: #a855f7; --accent-glow: rgba(124,58,237,0.25);
+      --green: #10b981; --green-dim: rgba(16,185,129,0.12);
+      --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,0.12);
+      --text: #e2e8f0; --text2: #94a3b8; --text3: #64748b; --radius: 12px;
     }
+    body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; padding: 1.5rem; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      min-height: 100vh;
-      padding: 1.5rem;
-    }
+    .header { text-align: center; margin-bottom: 2rem; position: relative; }
+    .header::before { content:''; position:absolute; top:-1.5rem; left:50%; transform:translateX(-50%); width:300px; height:150px; background:radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%); pointer-events:none; }
+    .header h1 { font-size:2rem; font-weight:700; letter-spacing:-0.5px; background:linear-gradient(135deg, #e2e8f0 30%, #a855f7 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header p { color:var(--text3); font-size:0.8rem; margin-top:0.4rem; font-family:'JetBrains Mono',monospace; }
+    .live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:6px; vertical-align:middle; animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,0.4);}50%{opacity:0.7;box-shadow:0 0 0 4px rgba(16,185,129,0);} }
 
-    /* ── HEADER ── */
-    .header {
-      text-align: center;
-      margin-bottom: 2rem;
-      position: relative;
-    }
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -1.5rem; left: 50%;
-      transform: translateX(-50%);
-      width: 300px; height: 150px;
-      background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #e2e8f0 30%, #a855f7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .header p {
-      color: var(--text3);
-      font-size: 0.85rem;
-      margin-top: 0.4rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .jarvis-bar { background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 0 40px rgba(124,58,237,0.08); }
+    .jarvis-label { font-size:0.68rem; font-family:'JetBrains Mono',monospace; color:var(--accent2); letter-spacing:2px; text-transform:uppercase; margin-bottom:0.75rem; }
+    .jarvis-input-row { display:flex; gap:0.75rem; }
+    .jarvis-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:1rem; padding:0.75rem 1rem; outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    .jarvis-input:focus { border-color:var(--accent2); box-shadow:0 0 0 3px var(--accent-glow); }
+    .jarvis-input::placeholder { color:var(--text3); }
+    .btn-jarvis { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:8px; color:white; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.9rem; padding:0.75rem 1.5rem; cursor:pointer; white-space:nowrap; transition:opacity 0.2s,transform 0.1s; }
+    .btn-jarvis:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); }
+    .btn-jarvis:disabled { opacity:0.4; cursor:not-allowed; }
 
-    /* ── JARVIS SEARCH ── */
-    .jarvis-bar {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 40px rgba(124,58,237,0.08);
-    }
-    .jarvis-label {
-      font-size: 0.7rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent2);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 0.75rem;
-    }
-    .jarvis-input-row {
-      display: flex;
-      gap: 0.75rem;
-    }
-    .jarvis-input {
-      flex: 1;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .jarvis-input:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-    .jarvis-input::placeholder { color: var(--text3); }
-    .btn-jarvis {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 0.75rem 1.5rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-jarvis:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    .btn-jarvis:disabled { opacity: 0.4; cursor: not-allowed; }
+    .recommendation { margin-top:1.25rem; display:none; }
+    .recommendation.visible { display:block; }
 
-    /* ── MATCH RESULTS ── */
-    .match-results {
-      margin-top: 1rem;
-      display: none;
-    }
-    .match-results.visible { display: block; }
-    .match-header {
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text3);
-      margin-bottom: 0.6rem;
-      letter-spacing: 1px;
-    }
-    .match-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 0.75rem;
-    }
-    .match-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem;
-      transition: border-color 0.2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .match-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .match-card:hover { border-color: var(--accent2); }
-    .match-card:hover::before { opacity: 1; }
-    .match-rank {
-      font-size: 0.65rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent2);
-      letter-spacing: 1px;
-      margin-bottom: 0.4rem;
-    }
-    .match-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.5rem;
-      color: var(--text);
-      line-height: 1.3;
-    }
-    .match-desc {
-      font-size: 0.8rem;
-      color: var(--text2);
-      line-height: 1.5;
-      margin-bottom: 0.75rem;
-    }
-    .match-score {
-      display: inline-block;
-      background: var(--accent-glow);
-      color: var(--accent2);
-      font-size: 0.7rem;
-      font-family: 'JetBrains Mono', monospace;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      margin-bottom: 0.75rem;
-    }
-    .no-match-banner {
-      background: var(--red-dim);
-      border: 1px solid rgba(239,68,68,0.2);
-      border-radius: 8px;
-      padding: 1rem;
-      color: #fca5a5;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
+    .rec-box { background:var(--surface2); border:1px solid var(--accent); border-radius:var(--radius); padding:1.5rem; box-shadow:0 0 30px rgba(124,58,237,0.12); }
+    .rec-label { font-size:0.65rem; font-family:'JetBrains Mono',monospace; color:var(--accent2); letter-spacing:2px; text-transform:uppercase; margin-bottom:0.75rem; }
+    .rec-name { font-size:1.25rem; font-weight:700; color:var(--text); margin-bottom:0.75rem; line-height:1.3; }
+    .rec-reason { font-size:0.9rem; color:var(--text2); line-height:1.6; margin-bottom:1.25rem; padding:0.85rem 1rem; background:var(--surface); border-left:3px solid var(--accent2); border-radius:0 6px 6px 0; }
+    .rec-actions { display:flex; gap:0.75rem; }
+    .btn-approve { background:linear-gradient(135deg,var(--green),#059669); border:none; border-radius:8px; color:white; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.95rem; padding:0.75rem 1.5rem; cursor:pointer; transition:opacity 0.2s,transform 0.1s; flex:1; }
+    .btn-approve:hover { opacity:0.9; transform:translateY(-1px); }
+    .btn-retry { background:var(--surface3); border:1px solid var(--border2); border-radius:8px; color:var(--text2); font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.9rem; padding:0.75rem 1.25rem; cursor:pointer; transition:background 0.2s; }
+    .btn-retry:hover { background:var(--border); }
 
-    /* ── GRID ── */
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .no-match-box { background:var(--red-dim); border:1px solid rgba(239,68,68,0.25); border-radius:var(--radius); padding:1.25rem 1.5rem; color:#fca5a5; }
+    .no-match-box strong { display:block; font-size:1rem; margin-bottom:0.4rem; }
+    .no-match-box p { font-size:0.85rem; opacity:0.8; }
 
-    /* ── CARD ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-    .card h2 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; }
+    .card h2 { font-size:0.68rem; font-weight:600; margin-bottom:1rem; color:var(--text3); text-transform:uppercase; letter-spacing:1.5px; font-family:'JetBrains Mono',monospace; }
 
-    /* ── FORM ── */
-    input, textarea {
-      width: 100%;
-      padding: 0.6rem 0.85rem;
-      border-radius: 8px;
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      margin-bottom: 0.65rem;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input:focus, textarea:focus {
-      border-color: var(--accent2);
-    }
-    input::placeholder, textarea::placeholder { color: var(--text3); }
-    textarea { min-height: 65px; resize: vertical; }
+    input, textarea { width:100%; padding:0.6rem 0.85rem; border-radius:8px; background:var(--surface2); color:var(--text); border:1px solid var(--border); margin-bottom:0.65rem; font-family:'Space Grotesk',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+    input:focus, textarea:focus { border-color:var(--accent2); }
+    input::placeholder, textarea::placeholder { color:var(--text3); }
+    textarea { min-height:65px; resize:vertical; }
 
-    /* ── BUTTONS ── */
-    .btn {
-      background: var(--surface3);
-      border: 1px solid var(--border2);
-      padding: 0.5rem 1rem;
-      border-radius: 7px;
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600;
-      font-size: 0.82rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn:hover:not(:disabled) { background: var(--border); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      color: white;
-    }
-    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
-    .btn-danger { background: var(--red-dim); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
-    .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
-    .btn-full { width: 100%; }
-    .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .btn { background:var(--surface3); border:1px solid var(--border2); padding:0.5rem 1rem; border-radius:7px; color:var(--text); font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.82rem; cursor:pointer; transition:all 0.15s; }
+    .btn:hover:not(:disabled){background:var(--border);}
+    .btn:disabled{opacity:0.4;cursor:not-allowed;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;}
+    .btn-primary:hover:not(:disabled){opacity:0.85;}
+    .btn-danger{background:var(--red-dim);border-color:rgba(239,68,68,0.3);color:#fca5a5;}
+    .btn-danger:hover:not(:disabled){background:rgba(239,68,68,0.2);}
+    .btn-full{width:100%;}
+    .btn-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;}
 
-    /* ── PROJECT CARDS ── */
-    .project-card {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-      background: var(--surface2);
-      transition: border-color 0.2s;
-    }
-    .project-card:hover { border-color: var(--border2); }
-    .project-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
-    .project-meta { font-size: 0.75rem; color: var(--text3); margin-bottom: 0.4rem; font-family: 'JetBrains Mono', monospace; }
-    .project-trigger { font-size: 0.85rem; color: var(--text2); margin-bottom: 0.75rem; line-height: 1.4; }
+    .project-card{border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:0.75rem;background:var(--surface2);transition:border-color 0.2s;}
+    .project-card:hover{border-color:var(--border2);}
+    .project-title{font-size:1rem;font-weight:600;margin-bottom:0.2rem;}
+    .project-meta{font-size:0.72rem;color:var(--text3);margin-bottom:0.4rem;font-family:'JetBrains Mono',monospace;}
+    .project-trigger{font-size:0.85rem;color:var(--text2);margin-bottom:0.75rem;line-height:1.4;}
+    .status-badge{display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-right:0.5rem;letter-spacing:0.5px;}
+    .status-draft{background:var(--surface3);color:var(--text3);}
+    .status-processing{background:var(--amber-dim);color:var(--amber);}
+    .status-suggestions_ready{background:var(--accent-glow);color:var(--accent2);}
+    .status-template_selected{background:var(--green-dim);color:var(--green);}
+    .status-no_match{background:var(--red-dim);color:#fca5a5;}
 
-    /* ── STATUS BADGES ── */
-    .status-badge {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-      margin-right: 0.5rem;
-      letter-spacing: 0.5px;
-    }
-    .status-draft { background: var(--surface3); color: var(--text3); }
-    .status-processing { background: var(--amber-dim); color: var(--amber); }
-    .status-suggestions_ready { background: var(--accent-glow); color: var(--accent2); }
-    .status-template_selected { background: var(--green-dim); color: var(--green); }
-    .status-no_match { background: var(--red-dim); color: #fca5a5; }
+    .results-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.85rem;margin-top:0.75rem;}
+    .results-panel-title{font-size:0.65rem;font-family:'JetBrains Mono',monospace;color:var(--accent2);letter-spacing:1px;margin-bottom:0.6rem;}
+    .result-match-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.75rem;margin-bottom:0.5rem;}
+    .result-match-name{font-weight:600;font-size:0.875rem;margin-bottom:0.2rem;}
+    .result-match-meta{font-size:0.7rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;}
 
-    /* ── RESULTS PANEL ── */
-    .results-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.85rem;
-      margin-top: 0.75rem;
-    }
-    .results-panel-title {
-      font-size: 0.7rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent2);
-      letter-spacing: 1px;
-      margin-bottom: 0.6rem;
-    }
-    .result-match-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-    .result-match-name { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.2rem; }
-    .result-match-meta { font-size: 0.72rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 0.5rem; }
-
-    /* ── MESSAGES ── */
-    .msg-success { color: var(--green); font-size: 0.85rem; margin-top: 0.5rem; }
-    .msg-error { color: #f87171; font-size: 0.85rem; margin-top: 0.5rem; }
-
-    /* ── SPINNER ── */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { display: inline-block; animation: spin 0.8s linear infinite; }
-
-    /* ── PULSE DOT ── */
-    .live-dot {
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      margin-right: 6px;
-      animation: pulse 2s ease-in-out infinite;
-      vertical-align: middle;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
-      50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(16,185,129,0); }
-    }
+    .msg-success{color:var(--green);font-size:0.85rem;margin-top:0.5rem;}
+    .msg-error{color:#f87171;font-size:0.85rem;margin-top:0.5rem;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .spin{display:inline-block;animation:spin 0.8s linear infinite;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    .fade-up{animation:fadeUp 0.3s ease forwards;}
   </style>
 </head>
-
 <body>
 
-  <!-- HEADER -->
   <div class="header">
     <h1>⚡ Jarvis Automation Studio</h1>
-    <p><span class="live-dot"></span>connected to supabase · 2,054 workflows ready</p>
+    <p><span class="live-dot"></span>connected · 2,054 workflows ready</p>
   </div>
 
-  <!-- JARVIS SEARCH BAR -->
   <div class="jarvis-bar">
-    <div class="jarvis-label">⚡ Jarvis — Tell me what the client needs</div>
+    <div class="jarvis-label">⚡ Jarvis — What does the client need?</div>
     <div class="jarvis-input-row">
-      <input
-        class="jarvis-input"
-        id="jarvisQuery"
-        type="text"
-        placeholder='e.g. "When a lead fills a form, notify me on Slack and add to HubSpot"'
-        onkeydown="if(event.key==='Enter') runJarvisSearch()"
-      />
+      <input class="jarvis-input" id="jarvisQuery" type="text"
+        placeholder='e.g. "When a lead fills a Typeform, notify on Slack and add to HubSpot"'
+        onkeydown="if(event.key==='Enter') runJarvisSearch()" />
       <button class="btn-jarvis" id="jarvisBtn" onclick="runJarvisSearch()">
         <i class="fas fa-bolt"></i> Find Workflow
       </button>
     </div>
-    <div class="match-results" id="matchResults"></div>
+    <div class="recommendation" id="recommendation"></div>
   </div>
 
-  <!-- MAIN GRID -->
   <div class="grid">
-
-    <!-- CREATE PROJECT -->
     <div class="card">
-      <h2>Create New Project</h2>
+      <h2>Create New Project Manually</h2>
       <form id="projectForm">
         <input name="title" placeholder="Project Title" required />
         <textarea name="trigger" placeholder="Trigger: what starts this automation?" required></textarea>
@@ -399,13 +136,10 @@
       </form>
       <p id="formMessage"></p>
     </div>
-
-    <!-- PROJECTS LIST -->
     <div class="card">
       <h2>Your Projects</h2>
       <div id="projectsList"><p style="color:var(--text3)">Loading projects...</p></div>
     </div>
-
   </div>
 
   <script>
@@ -413,21 +147,18 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiYnNiaXVmd2RqYXRqbGhwdnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1OTk2NzksImV4cCI6MjA3NjE3NTY3OX0._79MBz4Rx6bvCn8ICgeRLG5TW2Cre29UNCFACgEI8rg";
     const EDGE_FUNCTION_URL = "https://lbbsbiufwdjatjlhpvsg.supabase.co/functions/v1/automation-studio-ts";
     const JARVIS_MATCH_URL = "https://lbbsbiufwdjatjlhpvsg.supabase.co/functions/v1/jarvis-match";
-
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentRecommendation = null;
 
-    // ── JARVIS SEARCH ──
     async function runJarvisSearch() {
       const query = document.getElementById("jarvisQuery").value.trim();
       if (!query) return;
-
       const btn = document.getElementById("jarvisBtn");
-      const results = document.getElementById("matchResults");
-
-      btn.innerHTML = '<i class="fas fa-spinner spin"></i> Searching...';
+      const recBox = document.getElementById("recommendation");
+      btn.innerHTML = '<i class="fas fa-spinner spin"></i> Thinking...';
       btn.disabled = true;
-      results.className = "match-results visible";
-      results.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">Scanning 2,054 workflows...</p>';
+      recBox.className = "recommendation visible";
+      recBox.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;margin-top:0.5rem">Scanning 2,054 workflows...</p>';
 
       try {
         const res = await fetch(JARVIS_MATCH_URL, {
@@ -436,202 +167,134 @@
           body: JSON.stringify({ query })
         });
         const data = await res.json();
-
         if (data.error) throw new Error(data.error);
 
-        if (!data.matches || data.matches.length === 0) {
-          results.innerHTML = `
-            <div class="no-match-banner">
-              <i class="fas fa-exclamation-triangle"></i>
-              <div>
-                <strong>No match found</strong> for "<em>${query}</em>"<br>
-                <span style="font-size:0.8rem;opacity:0.8">ITLAS will build this from scratch when ready.</span>
-              </div>
+        if (data.no_match || !data.recommendation) {
+          currentRecommendation = null;
+          recBox.innerHTML = `
+            <div class="no-match-box fade-up">
+              <strong>❌ No matching workflow found</strong>
+              <p>Nothing in the library matches "<em>${query}</em>". ITLAS will build this from scratch when ready.</p>
             </div>`;
         } else {
-          const cards = data.matches.map((m, i) => `
-            <div class="match-card">
-              <div class="match-rank">MATCH #${i + 1} · ${data.total_candidates} candidates scanned</div>
-              <div class="match-name">${m.name.replace(/^\d+\s+/, '')}</div>
-              <div class="match-desc">${m.description || 'No description available.'}</div>
-              <div class="match-score">score: ${m.score}</div><br>
-              <button class="btn btn-primary" onclick="useThisWorkflow('${m.id}', \`${(m.name||'').replace(/`/g,"'")}\`, \`${(m.description||'').replace(/`/g,"'")}\`)">
-                <i class="fas fa-check"></i> Use This
-              </button>
-            </div>`).join('');
-
-          results.innerHTML = `
-            <div class="match-header">FOUND ${data.matches.length} MATCHES — SELECT ONE TO USE</div>
-            <div class="match-cards">${cards}</div>`;
+          const r = data.recommendation;
+          currentRecommendation = r;
+          const cleanName = r.name.replace(/^\d+\s+/,'');
+          recBox.innerHTML = `
+            <div class="rec-box fade-up">
+              <div class="rec-label">⚡ Jarvis Recommends</div>
+              <div class="rec-name">${cleanName}</div>
+              <div class="rec-reason">${r.reason}</div>
+              <div class="rec-actions">
+                <button class="btn-approve" onclick="approveRecommendation()">✅ Approve — Use This Workflow</button>
+                <button class="btn-retry" onclick="retrySearch()">↩ Try Again</button>
+              </div>
+            </div>`;
         }
-      } catch (err) {
-        results.innerHTML = `<p class="msg-error">❌ ${err.message}</p>`;
+      } catch(err) {
+        recBox.innerHTML = `<p class="msg-error" style="margin-top:0.5rem">❌ ${err.message}</p>`;
       }
-
       btn.innerHTML = '<i class="fas fa-bolt"></i> Find Workflow';
       btn.disabled = false;
     }
 
-    async function useThisWorkflow(workflowId, workflowName, workflowDesc) {
-      const title = prompt(`Project name for this workflow?\n\n"${workflowName}"`, workflowName.replace(/^\d+\s+/,''));
+    async function approveRecommendation() {
+      if (!currentRecommendation) return;
+      const r = currentRecommendation;
+      const cleanName = r.name.replace(/^\d+\s+/,'');
+      const title = prompt("Project name for this client:", cleanName);
       if (!title) return;
-
       const { error } = await sb.from("projects").insert([{
-        title,
-        trigger_description: workflowDesc,
-        status: "✅ Template Found",
-        your_final_choice: workflowId,
-        template_name: workflowName,
+        title, trigger_description: r.description,
+        status: "✅ Template Found", your_final_choice: r.id, template_name: r.name,
       }]);
-
       if (error) { alert("❌ " + error.message); return; }
-      alert("✅ Project created from this workflow!");
-      document.getElementById("matchResults").className = "match-results";
+      document.getElementById("recommendation").className = "recommendation";
       document.getElementById("jarvisQuery").value = "";
+      currentRecommendation = null;
       loadProjects();
+      alert("✅ Project created! Check Your Projects.");
     }
 
-    // ── HELPERS ──
+    function retrySearch() {
+      document.getElementById("recommendation").className = "recommendation";
+      document.getElementById("jarvisQuery").value = "";
+      document.getElementById("jarvisQuery").focus();
+      currentRecommendation = null;
+    }
+
     function showMessage(elId, msg, type) {
       const el = document.getElementById(elId);
-      el.innerText = msg;
-      el.className = type === "error" ? "msg-error" : "msg-success";
+      el.innerText = msg; el.className = type === "error" ? "msg-error" : "msg-success";
     }
 
     function statusClass(status) {
       if (!status) return "status-draft";
-      const s = status.toLowerCase().replace(/\s+/g,'_').replace(/[✅]/g,'');
-      const map = {
-        "processing": "status-processing",
-        "suggestions_ready": "status-suggestions_ready",
-        "template_selected": "status-template_selected",
-        "template_found": "status-template_selected",
-        "no_match": "status-no_match",
-      };
-      return map[s.trim()] || "status-draft";
+      const s = status.toLowerCase().replace(/\s+/g,'_').replace(/[✅]/g,'').trim();
+      const map = { "processing":"status-processing","suggestions_ready":"status-suggestions_ready","template_selected":"status-template_selected","template_found":"status-template_selected","no_match":"status-no_match" };
+      return map[s] || "status-draft";
     }
 
-    // ── LOAD PROJECTS ──
     async function loadProjects() {
       const list = document.getElementById("projectsList");
       list.innerHTML = "<p style='color:var(--text3)'>Loading...</p>";
       const { data, error } = await sb.from("projects").select("*").order("created_at", { ascending: false });
       if (error) { list.innerHTML = `<p class="msg-error">Error: ${error.message}</p>`; return; }
-      if (!data.length) { list.innerHTML = "<p style='color:var(--text3)'>No projects yet. Use Jarvis above to find a workflow!</p>"; return; }
-
+      if (!data.length) { list.innerHTML = "<p style='color:var(--text3)'>No projects yet. Use Jarvis above!</p>"; return; }
       list.innerHTML = "";
       data.forEach(p => {
         const div = document.createElement("div");
         div.className = "project-card";
-        div.id = "project-" + p.id;
-
-        let suggestionsHtml = "";
+        let extra = "";
         if (p.suggestions && p.suggestions.length > 0) {
-          suggestionsHtml = `<div class="results-panel">
-            <div class="results-panel-title">✨ TOP MATCHES</div>
-            ${p.suggestions.map(s => `
-              <div class="result-match-card">
-                <div class="result-match-name">#${s.rank} — ${s.name}</div>
-                <div class="result-match-meta">Score: ${s.match_score}</div>
-                <button class="btn btn-primary" onclick="selectTemplate('${p.id}', '${s.id}')">
-                  <i class="fas fa-check"></i> Use This Template
-                </button>
-              </div>`).join("")}
-          </div>`;
+          extra = `<div class="results-panel"><div class="results-panel-title">MATCHES</div>${p.suggestions.map(s=>`<div class="result-match-card"><div class="result-match-name">${s.name}</div><div class="result-match-meta">Score: ${s.match_score}</div><button class="btn btn-primary" onclick="selectTemplate('${p.id}','${s.id}')">Use This</button></div>`).join("")}</div>`;
         }
-
-        if (p.template_name) {
-          suggestionsHtml += `<p class="msg-success">✅ Template: <strong>${p.template_name}</strong></p>`;
-        }
-
+        if (p.template_name) extra += `<p class="msg-success">✅ ${p.template_name}</p>`;
+        if (p.error_reason) extra += `<p class="msg-error">❌ ${p.error_reason}</p>`;
         div.innerHTML = `
           <div class="project-title">${p.title}</div>
-          <div class="project-meta">
-            <span class="status-badge ${statusClass(p.status)}">${p.status || "draft"}</span>
-            ${new Date(p.created_at).toLocaleString()}
-          </div>
-          <div class="project-trigger">${p.trigger_description || ""}</div>
+          <div class="project-meta"><span class="status-badge ${statusClass(p.status)}">${p.status||"draft"}</span>${new Date(p.created_at).toLocaleString()}</div>
+          <div class="project-trigger">${p.trigger_description||""}</div>
           <div class="btn-row">
-            <button class="btn" id="gen-${p.id}" onclick="generateWorkflow('${p.id}')">
-              <i class="fas fa-code-branch"></i> Generate
-            </button>
-            <button class="btn btn-danger" onclick="deleteProject('${p.id}')">
-              <i class="fas fa-trash"></i> Delete
-            </button>
-          </div>
-          ${suggestionsHtml}
-          ${p.error_reason ? `<p class="msg-error">❌ ${p.error_reason}</p>` : ""}
-        `;
+            <button class="btn" id="gen-${p.id}" onclick="generateWorkflow('${p.id}')"><i class="fas fa-code-branch"></i> Generate</button>
+            <button class="btn btn-danger" onclick="deleteProject('${p.id}')"><i class="fas fa-trash"></i> Delete</button>
+          </div>${extra}`;
         list.appendChild(div);
       });
     }
 
-    // ── GENERATE / SELECT / DELETE ──
     async function generateWorkflow(projectId) {
-      const btn = document.getElementById("gen-" + projectId);
-      btn.innerHTML = "<i class='fas fa-spinner spin'></i> Searching...";
-      btn.disabled = true;
+      const btn = document.getElementById("gen-"+projectId);
+      btn.innerHTML = "<i class='fas fa-spinner spin'></i> Searching..."; btn.disabled = true;
       try {
-        const res = await fetch(EDGE_FUNCTION_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SUPABASE_ANON_KEY },
-          body: JSON.stringify({ project_id: projectId, action: "generate" })
-        });
+        const res = await fetch(EDGE_FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+SUPABASE_ANON_KEY}, body:JSON.stringify({project_id:projectId,action:"generate"}) });
         const result = await res.json();
-        if (!result.success) {
-          alert("❌ " + result.error);
-          btn.innerHTML = "<i class='fas fa-code-branch'></i> Generate";
-          btn.disabled = false;
-        } else { await loadProjects(); }
-      } catch (err) {
-        alert("❌ Network error: " + err.message);
-        btn.innerHTML = "<i class='fas fa-code-branch'></i> Generate";
-        btn.disabled = false;
-      }
+        if (!result.success) { alert("❌ "+result.error); btn.innerHTML="<i class='fas fa-code-branch'></i> Generate"; btn.disabled=false; }
+        else await loadProjects();
+      } catch(err) { alert("❌ "+err.message); btn.innerHTML="<i class='fas fa-code-branch'></i> Generate"; btn.disabled=false; }
     }
 
     async function selectTemplate(projectId, workflowId) {
-      const res = await fetch(EDGE_FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SUPABASE_ANON_KEY },
-        body: JSON.stringify({ project_id: projectId, workflow_id: workflowId, action: "select_template" })
-      });
+      const res = await fetch(EDGE_FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+SUPABASE_ANON_KEY}, body:JSON.stringify({project_id:projectId,workflow_id:workflowId,action:"select_template"}) });
       const result = await res.json();
-      if (!result.success) { alert("❌ " + result.error); }
-      else { alert("✅ Template selected: " + result.workflow_name); loadProjects(); }
+      if (!result.success) alert("❌ "+result.error);
+      else { alert("✅ Template: "+result.workflow_name); loadProjects(); }
     }
 
     async function deleteProject(id) {
-      if (!confirm("Delete this project? Cannot be undone.")) return;
-      await sb.from("projects").delete().eq("id", id);
-      loadProjects();
+      if (!confirm("Delete this project?")) return;
+      await sb.from("projects").delete().eq("id",id); loadProjects();
     }
 
-    // ── CREATE PROJECT FORM ──
     document.getElementById("projectForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const btn = document.getElementById("submitBtn");
-      btn.innerHTML = "<i class='fas fa-spinner spin'></i> Creating...";
-      btn.disabled = true;
-
-      const { error } = await sb.from("projects").insert([{
-        title: fd.get("title"),
-        trigger_description: fd.get("trigger"),
-        actions_description: fd.get("actions"),
-        notes: fd.get("notes"),
-        status: "Idea Submitted",
-      }]);
-
-      if (error) { showMessage("formMessage", "❌ Error: " + error.message, "error"); }
-      else {
-        showMessage("formMessage", "✅ Project created! Hit Generate to find workflows.", "success");
-        e.target.reset();
-        loadProjects();
-      }
-
-      btn.innerHTML = "<i class='fas fa-rocket'></i> Create Project";
-      btn.disabled = false;
+      btn.innerHTML = "<i class='fas fa-spinner spin'></i> Creating..."; btn.disabled = true;
+      const { error } = await sb.from("projects").insert([{ title:fd.get("title"), trigger_description:fd.get("trigger"), actions_description:fd.get("actions"), notes:fd.get("notes"), status:"Idea Submitted" }]);
+      if (error) showMessage("formMessage","❌ "+error.message,"error");
+      else { showMessage("formMessage","✅ Project created!","success"); e.target.reset(); loadProjects(); }
+      btn.innerHTML = "<i class='fas fa-rocket'></i> Create Project"; btn.disabled = false;
     });
 
     loadProjects();
