@@ -197,6 +197,8 @@
       background: var(--purple-dim);
       border: 1px solid rgba(139,92,246,0.2);
       color: #c4b5fd;
+      display: inline-block;
+      margin: 0.15rem;
     }
 
     .rec-actions { display: flex; gap: 0.75rem; }
@@ -507,7 +509,7 @@
             <div class="itlas-cell"><div class="itlas-letter">I — INTENT</div><div class="itlas-value">${query.length > 55 ? query.substring(0,52)+'...' : query}</div></div>
             <div class="itlas-cell"><div class="itlas-letter">T — TRIGGER</div><div class="itlas-value">${triggerFound}</div></div>
             <div class="itlas-cell"><div class="itlas-letter">L — LOGIC</div><div class="itlas-value">${hasLogic ? 'Conditional routing' : 'Linear — no branching'}</div></div>
-            <div class="itlas-cell"><div class="itlas-letter">A — ACTIONS</div><div class="itlas-value">${(r.description||'Automated actions').substring(0,55)}</div></div>
+            <div class="itlas-cell"><div class="itlas-letter">A — ACTIONS</div><div class="itlas-value">${found.length ? found.slice(0,3).join(' → ') : 'Automated actions'}</div></div>
             <div class="itlas-cell"><div class="itlas-letter">S — SAFETY</div><div class="itlas-value" style="color:var(--accent)">✓ Clear</div></div>
           </div>
           <div class="rec-box">
