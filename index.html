@@ -333,6 +333,7 @@
     .badge-found { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,255,136,0.15); }
     .badge-idea { background: var(--s3); color: var(--t2); border: 1px solid var(--b1); }
     .badge-nomatch { background: var(--red-dim); color: #ff8899; border: 1px solid rgba(255,68,85,0.15); }
+    .badge-deploying { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
 
     .project-actions { display: flex; gap: 0.4rem; }
     .btn-sm {
@@ -451,7 +452,7 @@
       </div>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-modal-ok" onclick="confirmApprove()">✅ Save Project</button>
+        <button class="btn-modal-ok" id="modalOkBtn" onclick="confirmApprove()">✅ Save Project</button>
       </div>
     </div>
   </div>
@@ -551,18 +552,50 @@
   async function confirmApprove() {
     const title = document.getElementById('modalTitle').value.trim();
     if (!title || !current) return;
-    const { error } = await sb.from('projects').insert([{
+
+    const okBtn = document.getElementById('modalOkBtn');
+    okBtn.textContent = 'Saving...';
+    okBtn.disabled = true;
+
+    // 1. Save to projects
+    const { data: projectData, error: projectError } = await sb.from('projects').insert([{
       title,
       trigger_description: current.description,
       status: '✅ Template Found',
-      your_final_choice: current.id,
+      your_final_choice: String(current.id),
       template_name: current.name,
+    }]).select('id').single();
+
+    if (projectError) {
+      alert('❌ ' + projectError.message);
+      okBtn.textContent = '✅ Save Project';
+      okBtn.disabled = false;
+      return;
+    }
+
+    // 2. Create agent_job so the bot deploys it
+    const { error: jobError } = await sb.from('agent_jobs').insert([{
+      agent_type: 'deploy_workflow',
+      status: 'pending',
+      retry_count: 0,
+      input_payload: {
+        workflow_id: current.id,
+        workflow_name: current.name,
+        project_id: projectData.id
+      }
     }]);
-    if (error) { alert('❌ ' + error.message); return; }
+
+    if (jobError) {
+      console.error('agent_job error:', jobError.message);
+      // Project saved OK even if job fails — don't block the user
+    }
+
     closeModal();
     document.getElementById('resultArea').innerHTML = '';
     document.getElementById('jarvisQuery').value = '';
     current = null;
+    okBtn.textContent = '✅ Save Project';
+    okBtn.disabled = false;
     loadProjects();
   }
 
@@ -583,7 +616,6 @@
       const card = document.createElement('div');
       card.className = 'project-card';
 
-      // top row
       const top = document.createElement('div');
       top.className = 'project-top';
       const name = document.createElement('div');
@@ -595,19 +627,16 @@
       top.appendChild(name);
       top.appendChild(date);
 
-      // badge
       const status = (p.status || '').toLowerCase();
       const badge = document.createElement('span');
       badge.className = 'badge ' + (status.includes('found') || status.includes('selected') ? 'badge-found' : status.includes('no') ? 'badge-nomatch' : 'badge-idea');
       badge.textContent = status.includes('found') ? 'MATCHED' : status.includes('no') ? 'NO MATCH' : 'IDEA';
 
-      // description
       const desc = document.createElement('div');
       desc.className = 'project-desc';
       const raw = (p.trigger_description || '');
       desc.textContent = raw.length > 120 ? raw.substring(0, 120) + '...' : raw;
 
-      // template line
       const actions = document.createElement('div');
       actions.className = 'project-actions';
       const delBtn = document.createElement('button');
